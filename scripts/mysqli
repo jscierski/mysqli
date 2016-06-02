@@ -1,0 +1,173 @@
+#!/usr/bin/env python
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--gay", help="Drop some acid.", action="store_true")
+args = parser.parse_args()
+
+from termcolor import colored
+
+shortcuts = {
+    '\\dt': 'show tables',
+    '\\ds': 'show databases',
+    '\\ps': 'show processlist'
+}
+
+USED_DATABASE = None
+
+from subprocess import PIPE, Popen
+from time import sleep
+
+def yymmddhhss():
+    from datetime import datetime
+    return datetime.now().strftime('%y%m%d%H%M')
+
+def preload_table_names():
+    o, e = ex('\\dt', raw=True)
+    return [t for t in o.split() if t] 
+
+def ex(cmd, raw=False):
+
+    if USED_DATABASE:
+        pcmd = 'mysql -u root %s' % USED_DATABASE
+    else:
+        pcmd = 'mysql -u root'
+
+    if not raw:
+        pcmd += ' -t'
+    else:
+        pcmd += ' -N'
+
+    p = Popen([pcmd], stdin=PIPE, stdout=PIPE, bufsize=1, shell=True)
+    if cmd in shortcuts:
+        cmd = shortcuts[cmd]
+
+
+    stdout, stderr = p.communicate(cmd)
+    if cmd == '\\?':
+        stdout += '\n\n*** mysqli extensions ***\n\\dt - list tables in current schema\n\\ds - list schemas\n'
+
+    return stdout, stderr
+
+GAY = args.gay
+
+if USED_DATABASE:
+    tables = preload_table_names()
+else:
+    tables = []
+
+from random import sample
+colors = ['blue', 'yellow', 'green', 'cyan', 'magenta', 'white', 'red']
+# A not in-place shuffle.
+def shuffle_(arr):
+    return sample(arr, len(arr))
+
+def print_prompt():
+    if GAY:
+        s = ''
+        for ch, color in zip('mysqli>', shuffle_(colors)):
+            s += colored(ch, color)
+        print s,
+    else:
+        print colored('mysqli>', 'magenta'),
+
+
+while True:
+    print_prompt()
+    cmd = raw_input()
+
+    ALLOWED = ['\\ds', '\\dp']
+    if not USED_DATABASE and cmd in ALLOWED:
+        print "No database selected. Type \ds for a list."
+
+    if not cmd:
+        continue
+
+    if cmd == 'exit' or cmd == 'exid;':
+        break
+
+    if cmd == 'dump':
+        if not USED_DATABASE:
+            print "No database selected, though. And I'm quite dumb."
+            continue
+        else:
+            p = Popen(['/bin/sh', '-c', 'mysqldump -u root %s > ~/%s.%s.sql.gz' % (
+                USED_DATABASE,
+                USED_DATABASE,
+                yymmddhhss())], stdin=PIPE, stdout=PIPE, bufsize=1)
+            stdout, stderr = p.communicate()
+            print "Dumped somewhere into ~, go look for it."
+            continue
+
+    if cmd.startswith('uh') and cmd.endswith('h'):
+        print "You seem to be lost. Here's what you can do:\n"
+        print "\t\\dt - list all tables in current database"
+        print "\t\\ds - list all existing databases"
+        print "\t\\dp - literally SHOW PROCESSLIST"
+        print "\ttable1+table2 - LEFT JOIN the two tables"
+        print "\ttable - shortcut for SELECT * FROM table"
+        print "\ttable.first - first entry in table"
+        print "\ttable.last - last entry in table"
+        print "\t@variable - show all global variables matching variable*"
+        print "\t@variable=1 - change a global variable"
+        print "\tdump - dump current DB to ~/$dbname.$yymmddhhss.sql.gz"
+        print "\nYou're all educated now! Go on, but don't break any hearts.\n"
+        continue
+
+    if cmd.startswith('use '):
+        # use database; <- need to drop the ;
+        USED_DATABASE = cmd.split(' ')[1].strip(';')
+        print "Switched database; now using %s" % USED_DATABASE
+        tables = preload_table_names()
+        continue
+
+    if ' ' not in cmd and '+' in cmd:
+        # $table1+$table2: join
+        a, b = cmd.split('+')
+        if a not in tables:
+            print "Error: %s is not a table in this DB." % a
+            continue
+
+        fk = a[:-1]  # cut the 's', this won't always work
+        cmd = 'SELECT * FROM %s LEFT JOIN %s ON %s.id = %s.%s_id' % (a, b, a, b, fk)
+
+
+    if ' ' not in cmd and '.' in cmd: # Regex would do better, or prefix.
+        # $tablename.{first,last}
+        a, b = cmd.split('.')
+        if a not in tables:
+            print "Error: %s is not a table in this DB." % a
+            continue
+
+        if b == 'first':
+            cmd = 'SELECT * FROM %s LIMIT 1' % a
+
+        if b == 'last':
+            out, err = ex('SELECT COUNT(*) FROM %s' % a, raw=True)
+            count = int(out)
+            cmd = 'SELECT * FROM %s LIMIT 1 OFFSET %d' % (a, count - 1)
+
+    if cmd[0] == '@' and '=' not in cmd:
+        # @innodb_buffer_pool_size
+        cmd = 'SHOW GLOBAL VARIABLES LIKE "%s%%"' % (cmd[1:],)
+    
+    if cmd[0] == '@' and '=' in cmd:
+        # @innodb_buffer_pool_size=1024
+        var, val = [p.strip() for p in cmd.split('=')]
+        var = var[1:]
+        cmd = 'SET GLOBAL %s = %s' % (var, val)
+
+    if cmd in tables:
+        # $tablename
+        cmd = 'SELECT * FROM ' + cmd
+
+    stdout, stderr = ex(cmd)
+
+    if stdout:
+        print stdout
+
+    if stderr:
+        print stderr
+
+
+print "Bye!"
