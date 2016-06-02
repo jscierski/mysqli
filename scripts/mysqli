@@ -26,6 +26,26 @@ def preload_table_names():
     o, e = ex('\\dt', raw=True)
     return [t for t in o.split() if t] 
 
+
+def find_foreign_key(table1, table2, db):
+    """
+    Finds first foreign key in table1 referencing table2
+    :param table1: parent table
+    :param table2: referenced table
+    :param db: database name
+    :return: foreign key
+    """
+    out, err = ex('SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME '
+              'FROM   INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE   REFERENCED_TABLE_SCHEMA = \'{db}\' '
+              'AND   REFERENCED_TABLE_NAME = \'{table}\';'.format(table=table1, db=db), raw=True)
+
+    for fk in out.splitlines():
+        table2_name, table2_column_name, table1_name, table1_column_name = fk.split()
+
+        if table2_name == table2:
+            return table2_name, table2_column_name, table1_name, table1_column_name
+
+
 def ex(cmd, raw=False):
 
     if USED_DATABASE:
@@ -132,9 +152,25 @@ while True:
             print "Error: %s is not a table in this DB." % a
             continue
 
-        fk = a[:-1]  # cut the 's', this won't always work
-        cmd = 'SELECT * FROM %s LEFT JOIN %s ON %s.id = %s.%s_id' % (a, b, a, b, fk)
+        fk = find_foreign_key(b, a, USED_DATABASE)
 
+        if fk:
+            a_name, a_column_name, b_name, b_column_name = fk
+
+        else:
+            fk = find_foreign_key(a, b, USED_DATABASE)
+
+            if fk:
+                b_name, b_column_name, a_name, a_column_name = fk
+
+        if fk:
+            cmd = 'SELECT * FROM {a_name} LEFT JOIN {b_name} ' \
+                  'ON {a_name}.{a_column_name}={b_name}.{b_column_name}'.format(a_name=a_name, b_name=b_name,
+                                                                                a_column_name=a_column_name,
+                                                                                b_column_name=b_column_name)
+        else:
+            fk = a[:-1]  # cut the 's', this won't always work
+            cmd = 'SELECT * FROM %s LEFT JOIN %s ON %s.id = %s.%s_id' % (a, b, a, b, fk)
 
     if ' ' not in cmd and '.' in cmd: # Regex would do better, or prefix.
         # $tablename.{first,last}
