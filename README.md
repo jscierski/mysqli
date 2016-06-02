@@ -19,7 +19,7 @@ Here's a very thorough rundown of the wonderful things you can do with `mysqli` 
 | `@innodb_something=1` | `SET GLOBAL @innodb_something=1` | Radical |
 | `$tablename.first` | First row in `$tablename` | Lame |
 | `$tablename.last` | Last row in `$tablename` | So-so |
-| $table1+$table2 | `JOIN` these two tables | Cute, but dumb |
+| `$table1+$table2` | `JOIN` these two tables | Cute, but dumb |
 | run with `--gay` | Dynamic rainbow prompt | 90s cool |
 | `dump` | `mysqldump` current database into `~` | Very |
 
