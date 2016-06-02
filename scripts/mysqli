@@ -94,7 +94,11 @@ def print_prompt():
 
 while True:
     print_prompt()
-    cmd = raw_input()
+    try:
+        cmd = raw_input()
+    except KeyboardInterrupt:
+        print '\nExiting...'
+        break
 
     ALLOWED = ['\\ds', '\\dp']
     if not USED_DATABASE and cmd in ALLOWED:
