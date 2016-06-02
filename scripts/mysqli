@@ -24,7 +24,12 @@ def yymmddhhss():
 
 def preload_table_names():
     o, e = ex('\\dt', raw=True)
-    return [t for t in o.split() if t] 
+    return [t for t in o.split() if t]
+
+
+def load_database_names():
+    o, e = ex('\\ds', raw=True)
+    return [db for db in o.split() if db]
 
 
 def find_foreign_key(table1, table2, db):
@@ -140,7 +145,11 @@ while True:
 
     if cmd.startswith('use '):
         # use database; <- need to drop the ;
-        USED_DATABASE = cmd.split(' ')[1].strip(';')
+        wanted_database = cmd.split(' ')[1].strip(';')
+        if wanted_database not in load_database_names():
+            print 'Database {db} does not exist. Type \ds for a list.'.format(db=wanted_database)
+            continue
+        USED_DATABASE = wanted_database
         print "Switched database; now using %s" % USED_DATABASE
         tables = preload_table_names()
         continue
