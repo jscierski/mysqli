@@ -29,7 +29,7 @@ This is version `0.x`, however we do use it internally in place of the stock `my
 
 # Roadmap
 
-We keep using it, you start using this, feedback happens and over time we actually build something nice. 
+We keep using it, you start using it, feedback happens and over time we actually build something nice. 
 
 # About exana.io
 We believe in giving back. It's easy to forget we wouldn't be here without the crazy idea of sharing your work.
