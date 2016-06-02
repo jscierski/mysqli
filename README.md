@@ -1,4 +1,7 @@
 # mysqli
+
+[![PyPI](https://img.shields.io/pypi/v/mysqli.svg?maxAge=2592000?style=flat-square)](https://pypi.python.org/pypi/mysqli)
+
 This is `mysql` improved. A slightly better MySQL command line client.
 
 # Getting started
