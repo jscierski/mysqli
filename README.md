@@ -14,8 +14,8 @@ Here's a very thorough rundown of the wonderful things you can do with `mysqli` 
 | `\dt`      | `SHOW TABLES` | Very |
 | `\ds`      | `SHOW DATABASES`      |   Okay |
 | `\dp`      | `SHOW PROCESSLIST`      |   Okay |
-| `$tablename` | `SELECT * FROM $tablename | Very |
-| `@innodb_` | `SHOW GLOBAL VARIABLES LIKE 'innodb_%' | Radical |
+| `$tablename` | `SELECT * FROM $tablename` | Very |
+| `@innodb_` | `SHOW GLOBAL VARIABLES LIKE 'innodb_%'` | Radical |
 | `@innodb_something=1` | `SET GLOBAL @innodb_something=1` | Radical |
 | `$tablename.first` | First row in `$tablename` | Lame |
 | `$tablename.last` | Last row in `$tablename` | So-so |
