@@ -7,5 +7,5 @@ setup(
     author_email='maligree@gmail.com',
     url='https://github.com/exana/mysqli',
     scripts=['scripts/mysqli'],
-    install_requires=['termcolor']
+    install_requires=['termcolor', 'six']
 )
